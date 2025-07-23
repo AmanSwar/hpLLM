@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 from typing import Tuple
-    
+
 @jax.custom_vjp
 def swish(x : jax.Array , beta : jax.Array | None = None) -> jax.Array:
     """
@@ -16,14 +16,14 @@ def swish(x : jax.Array , beta : jax.Array | None = None) -> jax.Array:
     z = beta * x
     return x * jax.nn.sigmoid(z)
 
-
+@jax.jit
 def swish_frwd(x : jax.Array, beta : jax.Array | None = None):
     fx = swish(x , beta)
     #for backward pass -> input and output
     residual = (x , beta , fx)
     return fx , residual
 
-
+@jax.jit
 def swish_bkwd(residual : Tuple , grad) -> Tuple:
 
     x , beta , fx  = residual
@@ -41,8 +41,6 @@ def swish_bkwd(residual : Tuple , grad) -> Tuple:
     grad_b = grad * grad_b
 
     return (grad_x , grad_b)
-
-
 
 
 swish.defvjp(swish_frwd , swish_bkwd)
