@@ -80,4 +80,24 @@ def logical_to_physcial(
     return jax.sharding.PartitionSpec(*spec)
 
 
+def logical_to_sharding(
+        logical_axes : Axes,
+        mesh : jax.sharding.Mesh,
+        rules : ShardingRules
+) -> jax.sharding.Sharding:
+    """
+    returns the sharding for a given sequence of logical array dim
+
+    Args:
+        logical_axes (Axes): logical dimensions
+        mesh (jax.sharding.Mesh): Mesh object
+        rules (ShardingRules): Sharding Rules
+
+    Returns:
+        jax.sharding.Sharding
+    """
+
+    assert mesh is not None
+    return jax.sharding.NamedSharding(mesh , logical_to_physcial(logical_axes , rules))
+
 
