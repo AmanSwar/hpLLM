@@ -9,6 +9,9 @@ AxisName: TypeAlias = str | tuple[str, ...] | None
 
 @dataclasses.dataclass
 class ShardingRules:
+    """
+    Mapping from logical data axis to physical mesh axis
+    """
     batch: AxisName
     sequence: AxisName
 
