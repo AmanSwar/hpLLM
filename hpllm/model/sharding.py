@@ -48,4 +48,36 @@ class ShardingRules:
     vocab_out: AxisName
 
 
+def logical_to_physcial(
+        logical_axes : Axes,
+        rules : ShardingRules
+) -> jax.sharding.PartitionSpec:
+    """
+    Returns how to physically shard a given sequence of logical array
+
+    Args:
+        logical_axes (Axes) : logical dimensions 
+        rules (ShardingRules) : Sharding rules defining which logical dimension maps to which axes on mesh
+
+    Raises:
+        ValueError: if all values in spec are not unqiue
+        NotImplementedError : if any dimension of logical axes is missing in Sharding Rules
+
+    Returns:
+        jax.sharding.PartitionSpec 
+    """    
+    try:
+        spec = [getattr(rules , axis) if axis is not None else None for axis in logical_axes]
+    except NotImplementedError:
+        raise NotImplementedError(f"Logical axes not found in Sharding rules  Logical axes : {logical_axes} , Sharding rules : {[field.name for field in dataclasses.fields(ShardingRules)]}")
+    flat_axes = jax.tree.leaves(spec)
+
+    if len(set(flat_axes)) != len(flat_axes):
+        raise ValueError(
+            f"Colliding physical axes from translating logical spec {logical_axes} -> {spec}"
+        )
+    
+    return jax.sharding.PartitionSpec(*spec)
+
+
 
