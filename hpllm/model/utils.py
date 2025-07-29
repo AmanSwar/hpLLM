@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 from config import Model_Config
-from nn import TensorInfo
+from nn import TensorInfo , QuantTensor
 
 
 def pytree_struct(cls, meta_fields: tuple = ()):
@@ -101,3 +101,32 @@ lenght_minus_padding = lambda segment_ids: auto_axes(
 )(segment_ids)
 
 which_platform = lambda cfg: cfg.mesh.devices.reshape(-1)[0].platform
+
+
+def einsum(
+    subscripts : str,
+    lhs : jax.Array,
+    rhs : jax.Array | QuantTensor,
+    out_sharding : P | None = None,
+):
+    """
+    Wrapper for jnp.einsum that can handle regular arrays and QuantTensor
+    """
+    #first condititon -> if array -> QuantTensor
+    if is_type(rhs , QuantTensor):
+        scale = jnp.expand_dims(rhs.scale , rhs.scale_expand_dims)
+
+        if rhs.out_scaling:
+            return(
+                jnp.einsum(subscripts , lhs , rhs.quant , out_sharding=out_sharding) * scale
+            )
+        
+        else:
+            return jnp.einsum(subscripts , lhs * rhs , rhs.quant , out_sharding=out_sharding)
+        
+
+    #if normal array
+    else:
+        return jnp.einsum(subscripts , lhs , rhs , out_sharding=out_sharding)
+    
+
