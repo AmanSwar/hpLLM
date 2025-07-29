@@ -7,9 +7,9 @@ from typing import Callable, Tuple, Dict
 import dataclasses
 from functools import partial
 
-from config import Model_Config
-from sharding import logical_to_sharding
-from utils import is_param, pytree_struct
+from hpllm.model.config import Model_Config
+from hpllm.model.sharding import logical_to_sharding
+from hpllm.model.utils import is_param, pytree_struct
 
 
 class TensorInfo:
