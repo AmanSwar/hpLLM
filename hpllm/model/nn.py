@@ -12,7 +12,7 @@ from sharding import logical_to_sharding
 from utils import is_param, pytree_struct
 
 
-class ArrayInfo:
+class TensorInfo:
     """
     Dataclass for all jax.Arrays containing fundemental info
     Attributes:
@@ -31,7 +31,7 @@ class ArrayInfo:
 
 
 @partial(pytree_struct, meta_fields=("out_scaling", "scale_expand_dims"))
-class QuantArray:
+class QuantTensor:
     """
     Dataclass for quantization of model parameters
     Attributes:
@@ -43,8 +43,8 @@ class QuantArray:
         ndim = python property returing number of dimensions of quant array
     """
 
-    quant: jax.Array | ArrayInfo
-    scale: jax.Array | ArrayInfo
+    quant: jax.Array | TensorInfo
+    scale: jax.Array | TensorInfo
     out_scaling: bool = False
     scale_expand_dims: int | tuple[int, ...] = ()
     shape = property(lambda self: self.quant.shape)
@@ -83,7 +83,7 @@ class Init:
             # unqiue key for each leaf
             key_iter = iter(jax.random.split(key, num_leaves))
 
-            # take in ArrayInfo object and initialize each of its parameters
+            # take in TensorInfo object and initialize each of its parameters
             return jax.tree.map(
                 lambda info: info.initializer(next(key_iter), info.shape, info.dtype),
                 abstract,
