@@ -10,8 +10,8 @@ import json
 import os
 from pathlib import Path
 
-from config import Model_Config
-from nn import TensorInfo , QuantTensor
+from hpllm.model.config import Model_Config
+from hpllm.model.nn import TensorInfo , QuantTensor
 
 
 def pytree_struct(cls, meta_fields: tuple = ()):
@@ -129,4 +129,3 @@ def einsum(
     else:
         return jnp.einsum(subscripts , lhs , rhs , out_sharding=out_sharding)
     
-
