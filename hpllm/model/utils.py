@@ -1,5 +1,8 @@
 import jax
 from jax import tree_util
+import jax.numpy as jnp
+from jax.experimental.shard import auto_axes
+from jax.sharding import PartitionSpec as P
 
 import dataclasses
 from typing import TypeAlias , Any
@@ -8,6 +11,7 @@ import os
 from pathlib import Path
 
 from config import Model_Config
+from nn import TensorInfo
 
 
 def pytree_struct(cls, meta_fields: tuple = ()):
@@ -79,7 +83,7 @@ is_type = lambda x, cls: (type(x).__name__ == cls.__name__) and (
     type(x).__module__ == cls.__module__
 )
 
-is_param = lambda x: is_type(x, ArrayInfo)
+is_param = lambda x: is_type(x, TensorInfo)
 
 count_left_padding = lambda ids, pad_id=0: auto_axes(
     lambda segment_ids: jnp.sum(
