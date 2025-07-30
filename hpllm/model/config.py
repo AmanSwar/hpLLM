@@ -9,6 +9,9 @@ static_class = lambda cls :  tree_util.register_static(dataclasses.dataclass(cls
 
 @static_class
 class Model_Config:
+
+    dtype : "jnp.dtype"
+
     # basic config
     embed: int
     q_heads: int
