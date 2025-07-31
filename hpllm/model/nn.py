@@ -9,7 +9,32 @@ from functools import partial
 
 from hpllm.model.config import Model_Config
 from hpllm.model.sharding import logical_to_sharding
-from hpllm.model.utils import is_param, pytree_struct
+from hpllm.model.utils import pytree_struct
+
+# helper functions
+is_type = lambda x, cls: (type(x).__name__ == cls.__name__) and (
+    type(x).__module__ == cls.__module__
+)
+
+is_param = lambda x: is_type(x, TensorInfo)
+
+count_left_padding = lambda ids, pad_id=0: auto_axes(
+    lambda segment_ids: jnp.sum(
+        jnp.cumsum(jnp.flip(segment_ids != 0, -1), axis=-1) > 0, -1
+    ),
+    out_sharding=P(None),
+)(ids)
+
+
+lenght_minus_padding = lambda segment_ids: auto_axes(
+    lambda segment_ids: jnp.sum(
+        jnp.cumsum(jnp.flip(segment_ids != 0, -1), axis=-1) > 0, -1
+    ),
+    out_sharding=P(None),
+)(segment_ids)
+
+which_platform = lambda cfg: cfg.mesh.devices.reshape(-1)[0].platform
+
 
 @partial(pytree_struct , meta_fields=("shape" , "logical_axes" , "initializer" , "metadata"))
 class TensorInfo:
@@ -49,6 +74,35 @@ class QuantTensor:
     scale_expand_dims: int | tuple[int, ...] = ()
     shape = property(lambda self: self.quant.shape)
     ndim = property(lambda self: self.quant.ndim)
+
+
+def einsum(
+    subscripts: str,
+    lhs: jax.Array,
+    rhs: jax.Array | QuantTensor,
+    out_sharding: P | None = None,
+):
+    """
+    Wrapper for jnp.einsum that can handle regular arrays and QuantTensor
+    """
+    # first condititon -> if array -> QuantTensor
+    if is_type(rhs, QuantTensor):
+        scale = jnp.expand_dims(rhs.scale, rhs.scale_expand_dims)
+
+        if rhs.out_scaling:
+            return (
+                jnp.einsum(subscripts, lhs, rhs.quant, out_sharding=out_sharding)
+                * scale
+            )
+
+        else:
+            return jnp.einsum(
+                subscripts, lhs * rhs, rhs.quant, out_sharding=out_sharding
+            )
+
+    # if normal array
+    else:
+        return jnp.einsum(subscripts, lhs, rhs, out_sharding=out_sharding)
 
 
 class Module:
