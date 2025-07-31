@@ -6,6 +6,7 @@ from hpllm.model.utils import pytree_struct
 from hpllm.model.nn import Module , TensorInfo , QuantTensor
 from hpllm.model.sharding import logical_to_sharding
 
+@pytree_struct
 class AttentionLayer(Module):
 
     """
@@ -33,33 +34,34 @@ class AttentionLayer(Module):
 
         layer = AttentionLayer(
             Wq = TensorInfo(
-                (cfg.embed , cfg.q_heads ,cfg.head_dim),
+                (cfg.embed_dim , cfg.n_heads ,cfg.head_dim),
                 cfg.dtype,
-                ("qkv_embed" , "kv_head" , "head_dim"), # based on ShardingRule
+                ("qkv_embed" , "n_heads" , "head_dim"), # based on ShardingRule
                 _init(1,2)
             ),
             Wk = TensorInfo(
-                (cfg.embed , cfg.kv_heads , cfg.head_dim),
+                (cfg.embed_dim , cfg.n_heads , cfg.head_dim),
                 cfg.dtype,
-                ("qkv_embed" , "kv_heads" , "head_dim"),
+                ("qkv_embed" , "n_heads" , "head_dim"),
                 _init(1,2),
             ),
             Wv = TensorInfo(
-                (cfg.embed , cfg.kv_heads , cfg.head_dim),
+                (cfg.embed_dim , cfg.n_heads , cfg.head_dim),
                 cfg.dtype,
-                ("qkv_embed" , "kv_heads", "head_dim"),
+                ("qkv_embed" , "n_heads", "head_dim"),
                 _init(1,2)
             ),
             Wo = TensorInfo(
-                (cfg.q_heads , cfg.head_dim , cfg.embed),
+                (cfg.n_heads , cfg.head_dim , cfg.embed_dim),
                 cfg.dtype,
                 ("qkv_embed" , "qkv_embed"),
                 _init(1),
 
             )
 
-            return layer
         )
+
+        return layer
 
 
         
