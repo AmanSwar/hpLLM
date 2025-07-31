@@ -11,7 +11,7 @@ from hpllm.model.config import Model_Config
 from hpllm.model.sharding import logical_to_sharding
 from hpllm.model.utils import is_param, pytree_struct
 
-
+@partial(pytree_struct , meta_fields=("shape" , "logical_axes" , "initializer" , "metadata"))
 class TensorInfo:
     """
     Dataclass for all jax.Arrays containing fundemental info
@@ -51,14 +51,36 @@ class QuantTensor:
     ndim = property(lambda self: self.quant.ndim)
 
 
-class Init:
+class Module:
+    """
+    Base class for initializing primitives
+    Main purpose is to define component information , sharding information and initialize weight
+
+    Raises:
+        NotImplementedError: if abstract method is not defined
+
+    """
 
     @classmethod
     def abstract(cls, cfg: Model_Config, *args, **kw):
+        """
+        Define the component of each primitive
+
+        Args:
+            cfg (Model_Config): instance of Model Config
+
+        Return : 
+            PyTree object of cls
+
+        """
+        
         raise NotImplementedError
 
     @classmethod
     def shardings(cls, cfg: Model_Config, *args, **kw):
+        """
+        shard the elements along the specified dimension
+        """
         abstract = cls.abstract(cfg, *args, **kw)
 
         return jax.tree.map(
@@ -69,15 +91,36 @@ class Init:
 
     @classmethod
     def init(cls, key: jax.random.PRNGKey, cfg: Model_Config, *args, **kw):
+        """
+        Initialize each parameter defined in abstract
+
+        Args:
+            key (jax.random.PRNGKey)
+            cfg (Model_Config)
+
+        Returns:
+            PyTree object containing the whole weights
+        """
+        #get the abstract instance of the class
         abstract = cls.abstract(cfg, *args, **kw)
+
+        #get the sharding 
         shardings = jax.tree.map(
             lambda info: logical_to_sharding(info.logical_axes, cfg.mesh, cfg.rules),
             abstract,
             is_leaf=is_param,
         )
 
+
+        #main init function -> initialize the parameter 
         @partial(jax.jit, out_shardings=shardings)
         def _init():
+            """
+            Initialize the parameter of each leave of the pytree a
+
+            Returns:
+                _type_: _description_
+            """
             # find total number of leaves
             num_leaves = len(jax.tree.leaves(abstract, is_leaf=is_param))
             # unqiue key for each leaf
