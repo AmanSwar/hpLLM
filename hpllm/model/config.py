@@ -13,9 +13,9 @@ class Model_Config:
     dtype : "jnp.dtype"
 
     # basic config
-    embed: int
-    q_heads: int
-    kv_heads: int
+    embed_dim: int  
+    n_heads: int
+    # kv_heads: int
     num_layers: int
     head_dim: int
     vocab_size: int
