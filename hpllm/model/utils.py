@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 
 from hpllm.model.config import Model_Config
-from hpllm.model.nn import TensorInfo , QuantTensor
 
 
 def pytree_struct(cls, meta_fields: tuple = ()):
@@ -78,54 +77,6 @@ def load_tokenizer(
     return PreTrainedTokenizerFast(tokenizer_file=str(tokenizer_path) , **config)
 
 
-# helper functions
-is_type = lambda x, cls: (type(x).__name__ == cls.__name__) and (
-    type(x).__module__ == cls.__module__
-)
-
-is_param = lambda x: is_type(x, TensorInfo)
-
-count_left_padding = lambda ids, pad_id=0: auto_axes(
-    lambda segment_ids: jnp.sum(
-        jnp.cumsum(jnp.flip(segment_ids != 0, -1), axis=-1) > 0, -1
-    ),
-    out_sharding=P(None),
-)(ids)
 
 
-lenght_minus_padding = lambda segment_ids: auto_axes(
-    lambda segment_ids: jnp.sum(
-        jnp.cumsum(jnp.flip(segment_ids != 0, -1), axis=-1) > 0, -1
-    ),
-    out_sharding=P(None),
-)(segment_ids)
-
-which_platform = lambda cfg: cfg.mesh.devices.reshape(-1)[0].platform
-
-
-def einsum(
-    subscripts : str,
-    lhs : jax.Array,
-    rhs : jax.Array | QuantTensor,
-    out_sharding : P | None = None,
-):
-    """
-    Wrapper for jnp.einsum that can handle regular arrays and QuantTensor
-    """
-    #first condititon -> if array -> QuantTensor
-    if is_type(rhs , QuantTensor):
-        scale = jnp.expand_dims(rhs.scale , rhs.scale_expand_dims)
-
-        if rhs.out_scaling:
-            return(
-                jnp.einsum(subscripts , lhs , rhs.quant , out_sharding=out_sharding) * scale
-            )
-        
-        else:
-            return jnp.einsum(subscripts , lhs * rhs , rhs.quant , out_sharding=out_sharding)
-        
-
-    #if normal array
-    else:
-        return jnp.einsum(subscripts , lhs , rhs , out_sharding=out_sharding)
     
