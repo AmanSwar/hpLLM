@@ -135,6 +135,8 @@ class Module:
         """
         shard the elements along the specified dimension
         """
+        assert type(cfg) == Model_Config
+        
         abstract = cls.abstract(cfg, *args, **kw)
 
         return jax.tree.map(
