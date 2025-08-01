@@ -72,7 +72,6 @@ def logical_to_physcial(
         spec = []
         for axis in logical_axes:
             if axis is not None:
-                print(getattr(rules , axis))
                 spec.append(getattr(rules , axis))
 
             else:
