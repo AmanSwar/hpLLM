@@ -1,9 +1,11 @@
 import jax
 from jax import tree_util
 import jax.numpy as jnp
+from jax.sharding import Mesh
 
 import dataclasses
 
+from hpllm.model.sharding import ShardingRules
 static_class = lambda cls :  tree_util.register_static(dataclasses.dataclass(cls))
 
 
@@ -34,4 +36,8 @@ class Model_Config:
     #MLP config
     mlp_ffw_size: int = -1
     mlp_layer_idxs: list[int] = dataclasses.field(default_factory=list)
+
+    #distributed
+    mesh : Mesh | None = None
+    rules : ShardingRules = dataclasses.field(default_factory=ShardingRules)
     
