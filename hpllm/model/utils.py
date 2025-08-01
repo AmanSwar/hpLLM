@@ -78,5 +78,22 @@ def load_tokenizer(
 
 
 
+def convert_to_list(weights):
+    """
+    Converts weights of child class of Module into list
+
+    Args:
+        weights (Module)
+    """
+
+    params = []
+
+    jax.tree.map(
+        lambda x : params.append(x.tolist()),
+        weights
+    )
+
+    return params
+
 
     
