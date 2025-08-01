@@ -5,6 +5,9 @@ from hpllm.model.config import Model_Config
 from hpllm.model.utils import pytree_struct
 from hpllm.model.nn import Module , TensorInfo , QuantTensor
 from hpllm.model.sharding import logical_to_sharding
+from hpllm.model.ffn.linear import MLPLayer
+from hpllm.model.ffn.moe import MOELayer
+
 
 @pytree_struct
 class AttentionLayer(Module):
@@ -65,3 +68,35 @@ class AttentionLayer(Module):
 
 
         
+@pytree_struct
+class TransformerLayer(Module):
+
+    ffw : MOELayer | MLPLayer # forward layer
+    attn : AttentionLayer
+    norm_pre_gamma : jax.Array | TensorInfo
+    norm_post_gamma : jax.Array | TensorInfo
+
+    @classmethod
+    def abstract(cls , cfg : Model_Config , layer_index : int):
+        #check if a layer is moe or not
+        is_moe = cfg.moe_ffw_size > 0 and (layer_index not in cfg.mlp_layer_idxs)
+
+        layer = TransformerLayer(
+            ffw = MOELayer.abstract(cfg) if is_moe else MLPLayer.abstract(cfg),
+            attn = AttentionLayer.abstract(cfg),
+            norm_pre_gamma = TensorInfo(
+                (cfg.embed_dim),
+                cfg.dtype,
+                ("act_embed",),
+                jax.nn.initializers.constant(1.0),
+            ),
+            norm_post_gamma = TensorInfo(
+                (cfg.embed_dim),
+                cfg.dtype,
+                ("act_embed",),
+                jax.nn.initializers.constant(1.0),
+            ),
+        )
+
+        return layer
+    
