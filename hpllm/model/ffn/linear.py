@@ -8,7 +8,7 @@ from hpllm.model.nn import Module , TensorInfo
 from hpllm.model.utils import pytree_struct
 
 
-
+@pytree_struct
 class MLPLayer(Module):
     """
     MLP layer wrapper 
@@ -36,14 +36,14 @@ class MLPLayer(Module):
                 cfg.dtype,
                 ("mlp_up_embed" , "mlp_up_ffw"),
                 _init(1)
-            )
+            ),
 
             Wup = TensorInfo(
                 (cfg.embed_dim, cfg.mlp_ffw_size),
                 cfg.dtype,
                 ("mlp_up_embed" , "mlp_up_ffw"),
                 _init(1)
-            )
+            ),
 
             Wdown = TensorInfo(
                 (cfg.mlp_ffw_size , cfg.embed_dim),
