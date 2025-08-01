@@ -4,6 +4,7 @@ import dataclasses
 from typing import TypeAlias
 
 
+
 AxisName: TypeAlias = str | tuple[str, ...] | None
 Axes : TypeAlias = tuple[AxisName , ...]
 
@@ -23,8 +24,7 @@ class ShardingRules:
     # attention
     head_dim: AxisName
     qkv_embed: AxisName
-    q_heads: AxisName
-    kv_heads: AxisName
+    n_heads: AxisName
     o_heads: AxisName
     o_embed: AxisName
 
@@ -67,7 +67,18 @@ def logical_to_physcial(
         jax.sharding.PartitionSpec 
     """    
     try:
-        spec = [getattr(rules , axis) if axis is not None else None for axis in logical_axes]
+        # spec = [getattr(rules , axis) if axis is not None else None for axis in logical_axes]
+
+        spec = []
+        for axis in logical_axes:
+            if axis is not None:
+                print(getattr(rules , axis))
+                spec.append(getattr(rules , axis))
+
+            else:
+                spec.append(None)
+
+            
     except NotImplementedError:
         raise NotImplementedError(f"Logical axes not found in Sharding rules  Logical axes : {logical_axes} , Sharding rules : {[field.name for field in dataclasses.fields(ShardingRules)]}")
     flat_axes = jax.tree.leaves(spec)
