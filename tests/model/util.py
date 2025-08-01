@@ -32,10 +32,10 @@ mesh = jax.make_mesh((2,4) , axis_names=("x", "y"))
 
 
 BATCH_AXIS_NAME = "x"
-EXPERT_AXIS_NAME = "y"
+EXPERT_AXIS_NAME = "x"
 TENSOR_ONLY_AXIS_NAME = "y"
 ATTN_HEADS_AXIS_NAME = "y"
-TENSOR_AXIS_NAME = ("y")
+TENSOR_AXIS_NAME = ("x" , "y")
 
 sharding_rule = ShardingRules(
     batch=BATCH_AXIS_NAME,
@@ -78,9 +78,9 @@ model_config = Model_Config(
     causal=True,
     mlp_ffw_size=256,
     mlp_layer_idxs=[0, 1],  
-    moe_ffw_size=-1,
-    moe_num_experts=0,
-    moe_experts_per_tok=0,
+    moe_ffw_size=4,
+    moe_num_experts=2,
+    moe_experts_per_tok=1,
     mesh=mesh,
     rules=sharding_rule,  # 
 )
