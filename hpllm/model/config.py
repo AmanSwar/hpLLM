@@ -33,11 +33,10 @@ class Model_Config:
     moe_gate_dtype: "jnp.dtype" = jnp.float32
     ep_strategy: str = "decode"
 
-    #MLP config
+    # MLP config
     mlp_ffw_size: int = -1
     mlp_layer_idxs: list[int] = dataclasses.field(default_factory=list)
 
-    #distributed
+    # distributed
     mesh : Mesh | None = None
-    rules : ShardingRules = dataclasses.field(default_factory=ShardingRules)
-    
+    rules: ShardingRules = dataclasses.field(default_factory=ShardingRules)
