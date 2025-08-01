@@ -2,23 +2,40 @@ import jax
 import jax.numpy as jnp
 from jax.sharding import Mesh
 
+
+import os
+
 from hpllm.model.config import Model_Config
 from hpllm.model.sharding import ShardingRules
 
-devices = jax.local_devices()
+# devices = jax.local_devices()
 
-if len(devices) < 2:
-    devices = jax.devices()
+# if len(devices) < 2:
+#     devices = jax.devices()
 
 
-mesh = Mesh(devices , axis_names=("x", "y" , "z"))
+def sim_multiCPU_dev(device_count: int = 8):
+    flags = os.environ.get("XLA_FLAGS", "")
+    flags += f" --xla_force_host_platform_device_count={device_count}"
+
+    os.environ["XLA_FLAGS"] = flags
+
+    # disable CUDA
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+
+sim_multiCPU_dev(8)
+devices = jax.devices()
+
+
+mesh = jax.make_mesh((2,4) , axis_names=("x", "y"))
 
 
 BATCH_AXIS_NAME = "x"
-EXPERT_AXIS_NAME = "z"
+EXPERT_AXIS_NAME = "y"
 TENSOR_ONLY_AXIS_NAME = "y"
 ATTN_HEADS_AXIS_NAME = "y"
-TENSOR_AXIS_NAME = ("y", "z")
+TENSOR_AXIS_NAME = ("y")
 
 sharding_rule = ShardingRules(
     batch=BATCH_AXIS_NAME,
